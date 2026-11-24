@@ -1,0 +1,78 @@
+{
+  "fecha": "2026-11-23T20:34:14.278Z",
+  "total_tests": 10,
+  "exitosos": 0,
+  "fallidos": 10,
+  "resultados": [
+    {
+      "id": 1,
+      "categoria": "Tech",
+      "success": false,
+      "error": "Classify API error: 400",
+      "tiempo_generacion": "3.2"
+    },
+    {
+      "id": 2,
+      "categoria": "Tech",
+      "success": false,
+      "error": "Classify API error: 400",
+      "tiempo_generacion": "0.0"
+    },
+    {
+      "id": 3,
+      "categoria": "Business",
+      "success": false,
+      "error": "Classify API error: 400",
+      "tiempo_generacion": "0.0"
+    },
+    {
+      "id": 4,
+      "categoria": "Productividad",
+      "success": false,
+      "error": "Classify API error: 400",
+      "tiempo_generacion": "0.0"
+    },
+    {
+      "id": 5,
+      "categoria": "Personal",
+      "success": false,
+      "error": "Classify API error: 400",
+      "tiempo_generacion": "0.0"
+    },
+    {
+      "id": 6,
+      "categoria": "Business",
+      "success": false,
+      "error": "Classify API error: 400",
+      "tiempo_generacion": "0.1"
+    },
+    {
+      "id": 7,
+      "categoria": "Tech",
+      "success": false,
+      "error": "Classify API error: 400",
+      "tiempo_generacion": "0.0"
+    },
+    {
+      "id": 8,
+      "categoria": "Marketing",
+      "success": false,
+      "error": "Classify API error: 400",
+      "tiempo_generacion": "0.0"
+    },
+    {
+      "id": 9,
+      "categoria": "Edge Case",
+      "success": false,
+      "error": "Classify API error: 400",
+      "tiempo_generacion": "0.0"
+    },
+    {
+      "id": 10,
+      "categoria": "Multilenguaje",
+      "success": false,
+      "error": "Classify API error: 400",
+      "tiempo_generacion": "0.1"
+    }
+  ]
+}

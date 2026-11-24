@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 export default function Home() {
   const router = useRouter();
@@ -130,6 +131,11 @@ export default function Home() {
       <div className="max-w-4xl mx-auto">
         {/* Header */}
         <header className="text-center mb-12">
+          <nav className="flex justify-center gap-6 mb-6">
+            <Link href="/blog" className="text-white/80 hover:text-white font-medium">
+              Blog IA
+            </Link>
+          </nav>
           <h1 className="text-5xl font-bold text-white mb-4">
             VNR IA Solutions
           </h1>
