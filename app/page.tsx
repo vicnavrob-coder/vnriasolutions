@@ -1,411 +1,404 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
-const tools = [
-  { name: 'ChatGPT', category: 'Chat IA', rating: 4.8, link: '/blog/chatgpt-vs-claude-comparativa-2026' },
-  { name: 'Claude', category: 'Chat IA', rating: 4.9, link: '/blog/tutorial-claude-espanol-guia-completa-2026' },
-  { name: 'Midjourney', category: 'Imágenes', rating: 4.7, link: '/blog/mejores-herramientas-ia-gratis-2026' },
-  { name: 'Notion AI', category: 'Productividad', rating: 4.6, link: '/blog/mejores-herramientas-ia-gratis-2026' },
+// Noticias trending de IA (actualizar diariamente)
+const trendingNews = [
+  {
+    id: 1,
+    title: 'GPT-5 se filtra: OpenAI prepara el modelo más potente de la historia',
+    category: 'OpenAI',
+    hot: true,
+    time: 'Hace 2 horas',
+    link: '/blog/chatgpt-vs-claude-comparativa-2026',
+  },
+  {
+    id: 2,
+    title: 'Claude 4 supera a GPT-4 en razonamiento matemático',
+    category: 'Anthropic',
+    hot: true,
+    time: 'Hace 4 horas',
+    link: '/blog/tutorial-claude-espanol-guia-completa-2026',
+  },
+  {
+    id: 3,
+    title: 'Midjourney V7: imágenes fotorrealistas indistinguibles de fotos reales',
+    category: 'Imágenes IA',
+    hot: false,
+    time: 'Hace 6 horas',
+    link: '/blog/mejores-herramientas-ia-gratis-2026',
+  },
+  {
+    id: 4,
+    title: 'Google Gemini 2.0 ya disponible gratis para todos',
+    category: 'Google',
+    hot: true,
+    time: 'Hace 8 horas',
+    link: '/blog/mejores-herramientas-ia-gratis-2026',
+  },
+  {
+    id: 5,
+    title: 'Sora de OpenAI genera videos de 1 minuto en calidad 4K',
+    category: 'Video IA',
+    hot: false,
+    time: 'Hace 10 horas',
+    link: '/blog/mejores-herramientas-ia-gratis-2026',
+  },
+  {
+    id: 6,
+    title: 'Europa aprueba regulación IA: lo que cambia para usuarios',
+    category: 'Regulación',
+    hot: false,
+    time: 'Hace 12 horas',
+    link: '/blog/mejores-herramientas-ia-gratis-2026',
+  },
 ];
 
 const articles = [
   {
     slug: 'chatgpt-vs-claude-comparativa-2026',
-    title: 'ChatGPT vs Claude 2026',
-    excerpt: 'Comparativa completa de los dos mejores asistentes IA',
+    title: 'ChatGPT vs Claude 2026: ¿Cuál elegir?',
+    excerpt: 'Comparativa completa actualizada de los dos gigantes de la IA',
     category: 'Comparativas',
+    readTime: '8 min',
   },
   {
     slug: 'mejores-herramientas-ia-gratis-2026',
     title: 'Top 50 Herramientas IA Gratis',
-    excerpt: 'Las mejores herramientas de IA sin pagar nada',
+    excerpt: 'Las mejores herramientas de IA sin pagar un euro',
     category: 'Recursos',
+    readTime: '12 min',
   },
   {
     slug: 'claude-programacion-tutorial-2026',
-    title: 'Claude para Programación',
-    excerpt: 'Guía completa para programar con Claude',
+    title: 'Programar con Claude: Guía Completa',
+    excerpt: 'Aprende a usar Claude para código como un pro',
     category: 'Tutoriales',
+    readTime: '10 min',
   },
 ];
 
 export default function Home() {
-  const router = useRouter();
-  const [problem, setProblem] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [step, setStep] = useState<'hero' | 'form' | 'questions' | 'processing'>('hero');
-  const [questions, setQuestions] = useState<any[]>([]);
-  const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
-
-  const handleAnalyze = async () => {
-    if (problem.length < 50) {
-      alert('Describe tu problema con más detalle (mínimo 50 caracteres)');
-      return;
-    }
-
-    setIsLoading(true);
-    try {
-      const response = await fetch('/api/classify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ problem }),
-      });
-
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error);
-
-      setQuestions(data.questions || []);
-      setStep('questions');
-    } catch (error: any) {
-      alert('Error: ' + error.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleSubmitAnswers = async () => {
-    if (!email || !name) {
-      alert('Por favor ingresa tu nombre y email');
-      return;
-    }
-
-    setStep('processing');
-    setIsLoading(true);
-
-    try {
-      const response = await fetch('/api/generate-solution', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ problem, answers, email, name }),
-      });
-
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error);
-
-      router.push(`/solucion/${data.consultationId}`);
-    } catch (error: any) {
-      alert('Error: ' + error.message);
-      setStep('questions');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-gray-950">
       {/* Navigation */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
-          <Link href="/" className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
-            VNR IA Solutions
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-gray-950/95 backdrop-blur-md border-b border-gray-800">
+        <div className="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
+          <Link href="/" className="text-2xl font-black text-white">
+            VNR<span className="text-purple-500">IA</span>
           </Link>
-          <div className="flex gap-6 items-center">
-            <Link href="/blog" className="text-gray-600 hover:text-purple-600 font-medium transition">
-              Blog
+          <div className="hidden md:flex gap-6 items-center">
+            <Link href="/blog" className="text-gray-400 hover:text-white font-medium transition">
+              Artículos
             </Link>
-            <Link href="#herramientas" className="text-gray-600 hover:text-purple-600 font-medium transition">
-              Herramientas
+            <Link href="#trending" className="text-gray-400 hover:text-white font-medium transition">
+              Trending
             </Link>
-            <button
-              onClick={() => setStep('form')}
-              className="bg-gradient-to-r from-purple-600 to-blue-500 text-white px-5 py-2 rounded-full font-medium hover:shadow-lg transition"
+            <a
+              href="https://kick.com/hablosinsaber"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-green-500 hover:bg-green-400 text-black px-4 py-2 rounded-lg font-bold text-sm transition flex items-center gap-2"
             >
-              Resolver Problema
-            </button>
+              <span>🎮</span> KICK Live
+            </a>
           </div>
+          <a
+            href="https://kick.com/hablosinsaber"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="md:hidden bg-green-500 text-black px-3 py-1.5 rounded-lg font-bold text-sm"
+          >
+            🎮 KICK
+          </a>
         </div>
       </nav>
 
-      {/* Hero Section */}
-      {step === 'hero' && (
-        <>
-          <section className="pt-32 pb-20 px-4 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-            <div className="max-w-4xl mx-auto text-center">
-              <div className="inline-block mb-6 px-4 py-2 bg-purple-500/20 rounded-full">
-                <span className="text-purple-300 text-sm font-medium">Potenciado por IA de última generación</span>
-              </div>
-
-              <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
-                Domina la <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">Inteligencia Artificial</span>
+      {/* Hero - Noticia Principal */}
+      <section className="pt-20 relative overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-purple-900/40 via-gray-950 to-blue-900/30"></div>
+        <div className="relative max-w-7xl mx-auto px-4 py-16">
+          <div className="grid lg:grid-cols-5 gap-8">
+            {/* Main Story */}
+            <div className="lg:col-span-3">
+              <span className="inline-block bg-red-500 text-white text-xs font-bold px-3 py-1 rounded mb-4 animate-pulse">
+                🔥 ÚLTIMA HORA
+              </span>
+              <h1 className="text-4xl md:text-5xl font-black text-white mb-4 leading-tight">
+                La IA revoluciona 2026: Todo lo que necesitas saber hoy
               </h1>
-
-              <p className="text-xl text-gray-300 mb-10 max-w-2xl mx-auto">
-                Tutoriales, comparativas y herramientas para aprovechar el poder de la IA en tu trabajo y proyectos.
+              <p className="text-xl text-gray-400 mb-6">
+                Las últimas novedades en inteligencia artificial, herramientas gratis y tutoriales para aprovechar la tecnología que está cambiando el mundo.
               </p>
-
-              <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <button
-                  onClick={() => setStep('form')}
-                  className="bg-white text-purple-700 px-8 py-4 rounded-full font-semibold text-lg hover:shadow-xl transition transform hover:-translate-y-1"
-                >
-                  Resolver Mi Problema con IA
-                </button>
+              <div className="flex flex-wrap gap-4">
                 <Link
                   href="/blog"
-                  className="border-2 border-white/30 text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-white/10 transition"
+                  className="bg-purple-600 hover:bg-purple-500 text-white px-6 py-3 rounded-xl font-bold transition"
                 >
                   Ver Artículos
                 </Link>
-              </div>
-
-              <div className="mt-16 grid grid-cols-3 gap-8 max-w-lg mx-auto">
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-white">50+</div>
-                  <div className="text-gray-400 text-sm">Herramientas IA</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-white">1.2K+</div>
-                  <div className="text-gray-400 text-sm">Problemas Resueltos</div>
-                </div>
-                <div className="text-center">
-                  <div className="text-3xl font-bold text-white">4.9</div>
-                  <div className="text-gray-400 text-sm">Valoración</div>
-                </div>
-              </div>
-            </div>
-          </section>
-
-          {/* Featured Articles */}
-          <section className="py-20 px-4 bg-gray-50">
-            <div className="max-w-6xl mx-auto">
-              <div className="text-center mb-12">
-                <h2 className="text-3xl font-bold text-gray-800 mb-4">Artículos Destacados</h2>
-                <p className="text-gray-600">Guías y tutoriales para dominar las herramientas de IA</p>
-              </div>
-
-              <div className="grid md:grid-cols-3 gap-6">
-                {articles.map((article) => (
-                  <Link
-                    key={article.slug}
-                    href={`/blog/${article.slug}`}
-                    className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-xl transition group"
-                  >
-                    <span className="text-sm font-medium text-purple-600 bg-purple-50 px-3 py-1 rounded-full">
-                      {article.category}
-                    </span>
-                    <h3 className="text-xl font-bold text-gray-800 mt-4 mb-2 group-hover:text-purple-600 transition">
-                      {article.title}
-                    </h3>
-                    <p className="text-gray-600 mb-4">{article.excerpt}</p>
-                    <span className="text-purple-600 font-medium group-hover:translate-x-2 inline-block transition-transform">
-                      Leer más →
-                    </span>
-                  </Link>
-                ))}
-              </div>
-
-              <div className="text-center mt-10">
-                <Link
-                  href="/blog"
-                  className="text-purple-600 font-semibold hover:text-purple-700 text-lg"
+                <a
+                  href="https://kick.com/hablosinsaber"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="bg-green-500 hover:bg-green-400 text-black px-6 py-3 rounded-xl font-bold transition flex items-center gap-2"
                 >
-                  Ver todos los artículos →
-                </Link>
+                  🎮 Ver en KICK
+                </a>
               </div>
             </div>
-          </section>
 
-          {/* Tools Section */}
-          <section id="herramientas" className="py-20 px-4">
-            <div className="max-w-6xl mx-auto">
-              <div className="text-center mb-12">
-                <h2 className="text-3xl font-bold text-gray-800 mb-4">Herramientas IA Recomendadas</h2>
-                <p className="text-gray-600">Las mejores herramientas de IA analizadas y comparadas</p>
-              </div>
-
-              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-                {tools.map((tool) => (
-                  <Link
-                    key={tool.name}
-                    href={tool.link}
-                    className="bg-white border border-gray-200 rounded-xl p-5 hover:border-purple-300 hover:shadow-md transition group"
-                  >
-                    <div className="flex justify-between items-start mb-3">
-                      <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-blue-100 rounded-xl flex items-center justify-center">
-                        <span className="text-2xl font-bold text-purple-600">{tool.name[0]}</span>
-                      </div>
-                      <span className="text-sm font-medium text-yellow-600 bg-yellow-50 px-2 py-1 rounded">
-                        {tool.rating}
-                      </span>
-                    </div>
-                    <h3 className="font-bold text-gray-800 group-hover:text-purple-600 transition">{tool.name}</h3>
-                    <p className="text-sm text-gray-500">{tool.category}</p>
-                  </Link>
-                ))}
-              </div>
-
-              <div className="text-center mt-10">
-                <Link
-                  href="/blog/mejores-herramientas-ia-gratis-2026"
-                  className="bg-gradient-to-r from-purple-600 to-blue-500 text-white px-8 py-3 rounded-full font-semibold hover:shadow-lg transition"
-                >
-                  Ver Top 50 Herramientas IA Gratis
-                </Link>
-              </div>
-            </div>
-          </section>
-
-          {/* CTA Section */}
-          <section className="py-20 px-4 bg-gradient-to-r from-purple-600 to-blue-500">
-            <div className="max-w-3xl mx-auto text-center">
-              <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
-                ¿Tienes un problema que la IA puede resolver?
-              </h2>
-              <p className="text-xl text-white/90 mb-8">
-                Describe tu problema y recibe una solución personalizada en minutos. Gratis.
-              </p>
-              <button
-                onClick={() => setStep('form')}
-                className="bg-white text-purple-700 px-10 py-4 rounded-full font-semibold text-lg hover:shadow-xl transition transform hover:-translate-y-1"
+            {/* Kick Promo Card */}
+            <div className="lg:col-span-2">
+              <a
+                href="https://kick.com/hablosinsaber"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="block bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-6 hover:scale-[1.02] transition-transform"
               >
-                Obtener Mi Solución
-              </button>
-            </div>
-          </section>
-
-          {/* Footer */}
-          <footer className="py-12 px-4 bg-gray-900">
-            <div className="max-w-6xl mx-auto">
-              <div className="flex flex-col md:flex-row justify-between items-center">
-                <div className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent mb-4 md:mb-0">
-                  VNR IA Solutions
-                </div>
-                <div className="flex gap-6">
-                  <Link href="/blog" className="text-gray-400 hover:text-white transition">Blog</Link>
-                  <Link href="#herramientas" className="text-gray-400 hover:text-white transition">Herramientas</Link>
-                </div>
-              </div>
-              <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-500 text-sm">
-                © 2026 VNR IA Solutions. Todos los derechos reservados.
-              </div>
-            </div>
-          </footer>
-        </>
-      )}
-
-      {/* Problem Form */}
-      {step === 'form' && (
-        <section className="pt-32 pb-20 px-4 min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-          <div className="max-w-2xl mx-auto">
-            <button
-              onClick={() => setStep('hero')}
-              className="text-white/70 hover:text-white mb-8 flex items-center gap-2"
-            >
-              ← Volver
-            </button>
-
-            <div className="bg-white rounded-3xl p-8 shadow-2xl">
-              <h2 className="text-3xl font-bold text-gray-800 mb-2">Describe tu problema</h2>
-              <p className="text-gray-600 mb-6">Cuanto más detalle, mejor será la solución.</p>
-
-              <textarea
-                value={problem}
-                onChange={(e) => setProblem(e.target.value)}
-                placeholder="Ejemplo: Necesito automatizar las respuestas de atención al cliente de mi tienda online. Recibo unas 50 consultas diarias y quiero que la IA responda las preguntas frecuentes..."
-                className="w-full h-48 p-4 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none resize-none text-gray-800"
-                disabled={isLoading}
-              />
-
-              <div className="flex justify-between items-center mt-4 mb-6">
-                <span className="text-sm text-gray-500">{problem.length}/500 caracteres (mín. 50)</span>
-              </div>
-
-              <button
-                onClick={handleAnalyze}
-                disabled={isLoading || problem.length < 50}
-                className="w-full bg-gradient-to-r from-purple-600 to-blue-500 text-white py-4 rounded-xl font-semibold text-lg hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isLoading ? 'Analizando...' : 'Analizar Mi Problema'}
-              </button>
-
-              <p className="text-center text-sm text-gray-500 mt-4">
-                Gratis • Sin tarjeta • Respuesta en 2 minutos
-              </p>
-            </div>
-          </div>
-        </section>
-      )}
-
-      {/* Questions Step */}
-      {step === 'questions' && (
-        <section className="pt-32 pb-20 px-4 min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
-          <div className="max-w-2xl mx-auto">
-            <button
-              onClick={() => setStep('form')}
-              className="text-white/70 hover:text-white mb-8 flex items-center gap-2"
-            >
-              ← Volver
-            </button>
-
-            <div className="bg-white rounded-3xl p-8 shadow-2xl">
-              <h2 className="text-2xl font-bold text-gray-800 mb-2">Personaliza tu solución</h2>
-              <p className="text-gray-600 mb-6">Unas preguntas rápidas para darte la mejor respuesta.</p>
-
-              <div className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Tu nombre</label>
-                  <input
-                    type="text"
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none"
-                    placeholder="Tu nombre"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Tu email</label>
-                  <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none"
-                    placeholder="tu@email.com"
-                  />
-                </div>
-
-                {questions.map((q, i) => (
-                  <div key={q.id || i}>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      {i + 1}. {q.question}
-                    </label>
-                    <input
-                      type="text"
-                      value={answers[q.id] || ''}
-                      onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })}
-                      className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none"
-                    />
+                <div className="text-black">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-3xl">🎮</span>
+                    <span className="font-black text-xl">hablosinsaber</span>
                   </div>
-                ))}
-              </div>
-
-              <button
-                onClick={handleSubmitAnswers}
-                disabled={isLoading || !email || !name}
-                className="w-full mt-8 bg-gradient-to-r from-purple-600 to-blue-500 text-white py-4 rounded-xl font-semibold text-lg hover:shadow-lg transition disabled:opacity-50"
-              >
-                {isLoading ? 'Generando...' : 'Generar Mi Solución'}
-              </button>
+                  <p className="font-bold text-lg mb-4">
+                    Streams de tecnología, gaming y más. ¡Únete a la comunidad!
+                  </p>
+                  <div className="flex items-center gap-2 bg-black/20 rounded-lg px-4 py-2 w-fit">
+                    <span className="w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
+                    <span className="font-bold">SÍGUENOS EN KICK</span>
+                  </div>
+                </div>
+              </a>
             </div>
           </div>
-        </section>
-      )}
+        </div>
+      </section>
 
-      {/* Processing Step */}
-      {step === 'processing' && (
-        <section className="pt-32 pb-20 px-4 min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
-          <div className="max-w-md mx-auto text-center">
-            <div className="w-20 h-20 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-8"></div>
-            <h2 className="text-2xl font-bold text-white mb-4">Generando tu solución...</h2>
-            <p className="text-gray-300">Esto puede tomar hasta 2 minutos. Estamos analizando tu problema y creando una solución personalizada.</p>
+      {/* Trending News */}
+      <section id="trending" className="py-12 px-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-2xl font-black text-white flex items-center gap-2">
+              <span>📈</span> Trending en IA
+            </h2>
+            <span className="text-gray-500 text-sm">Actualizado cada hora</span>
           </div>
-        </section>
-      )}
+
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {trendingNews.map((news) => (
+              <Link
+                key={news.id}
+                href={news.link}
+                className="bg-gray-900 hover:bg-gray-800 border border-gray-800 rounded-xl p-5 transition group"
+              >
+                <div className="flex items-start justify-between mb-3">
+                  <span className="text-xs font-bold text-purple-400 bg-purple-500/20 px-2 py-1 rounded">
+                    {news.category}
+                  </span>
+                  {news.hot && (
+                    <span className="text-xs font-bold text-red-400 bg-red-500/20 px-2 py-1 rounded animate-pulse">
+                      🔥 HOT
+                    </span>
+                  )}
+                </div>
+                <h3 className="text-lg font-bold text-white group-hover:text-purple-400 transition mb-3 line-clamp-2">
+                  {news.title}
+                </h3>
+                <span className="text-sm text-gray-500">{news.time}</span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* HispanosEnSuiza Banner */}
+      <section className="py-8 px-4">
+        <div className="max-w-7xl mx-auto">
+          <a
+            href="https://hispanosensuiza.ch"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block bg-gradient-to-r from-red-600 via-yellow-500 to-red-600 rounded-2xl p-1 hover:scale-[1.01] transition-transform"
+          >
+            <div className="bg-gray-950 rounded-xl p-6 md:p-8">
+              <div className="flex flex-col md:flex-row items-center justify-between gap-6">
+                <div className="text-center md:text-left">
+                  <div className="flex items-center justify-center md:justify-start gap-3 mb-3">
+                    <span className="text-4xl">🇪🇸🇨🇭</span>
+                    <h3 className="text-2xl md:text-3xl font-black text-white">
+                      Hispanos en Suiza
+                    </h3>
+                  </div>
+                  <p className="text-gray-400 text-lg max-w-xl">
+                    La comunidad más grande de hispanohablantes en Suiza. Guías, recursos y una comunidad que te ayuda.
+                  </p>
+                </div>
+                <div className="flex flex-col sm:flex-row gap-3">
+                  <span className="bg-white text-gray-900 px-6 py-3 rounded-xl font-bold text-center hover:bg-gray-100 transition">
+                    Visitar Web →
+                  </span>
+                  <a
+                    href="https://instagram.com/hispanosensuiza"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="bg-gradient-to-r from-purple-600 to-pink-500 text-white px-6 py-3 rounded-xl font-bold text-center hover:opacity-90 transition"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    @hispanosensuiza
+                  </a>
+                </div>
+              </div>
+            </div>
+          </a>
+        </div>
+      </section>
+
+      {/* Blog Articles */}
+      <section className="py-12 px-4">
+        <div className="max-w-7xl mx-auto">
+          <div className="flex justify-between items-center mb-8">
+            <h2 className="text-2xl font-black text-white flex items-center gap-2">
+              <span>📚</span> Guías y Tutoriales
+            </h2>
+            <Link href="/blog" className="text-purple-400 hover:text-purple-300 font-bold transition">
+              Ver todos →
+            </Link>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {articles.map((article) => (
+              <Link
+                key={article.slug}
+                href={`/blog/${article.slug}`}
+                className="bg-gray-900 hover:bg-gray-800 border border-gray-800 rounded-2xl p-6 transition group"
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <span className="text-xs font-bold text-blue-400 bg-blue-500/20 px-3 py-1 rounded-full">
+                    {article.category}
+                  </span>
+                  <span className="text-xs text-gray-500">{article.readTime}</span>
+                </div>
+                <h3 className="text-xl font-bold text-white group-hover:text-purple-400 transition mb-3">
+                  {article.title}
+                </h3>
+                <p className="text-gray-400 mb-4">{article.excerpt}</p>
+                <span className="text-purple-400 font-bold group-hover:translate-x-2 inline-block transition-transform">
+                  Leer artículo →
+                </span>
+              </Link>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Social Links Section */}
+      <section className="py-12 px-4 bg-gray-900/50">
+        <div className="max-w-7xl mx-auto text-center">
+          <h2 className="text-2xl font-black text-white mb-8">Síguenos en redes</h2>
+          <div className="flex flex-wrap justify-center gap-4">
+            <a
+              href="https://kick.com/hablosinsaber"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-green-500 hover:bg-green-400 text-black px-8 py-4 rounded-xl font-bold text-lg transition flex items-center gap-3"
+            >
+              <span className="text-2xl">🎮</span>
+              <div className="text-left">
+                <div className="text-xs opacity-80">KICK</div>
+                <div>hablosinsaber</div>
+              </div>
+            </a>
+            <a
+              href="https://hispanosensuiza.ch"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-gradient-to-r from-red-500 to-yellow-500 hover:opacity-90 text-white px-8 py-4 rounded-xl font-bold text-lg transition flex items-center gap-3"
+            >
+              <span className="text-2xl">🇪🇸🇨🇭</span>
+              <div className="text-left">
+                <div className="text-xs opacity-80">Web</div>
+                <div>HispanosEnSuiza</div>
+              </div>
+            </a>
+            <a
+              href="https://instagram.com/hispanosensuiza"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="bg-gradient-to-r from-purple-600 to-pink-500 hover:opacity-90 text-white px-8 py-4 rounded-xl font-bold text-lg transition flex items-center gap-3"
+            >
+              <span className="text-2xl">📸</span>
+              <div className="text-left">
+                <div className="text-xs opacity-80">Instagram</div>
+                <div>@hispanosensuiza</div>
+              </div>
+            </a>
+          </div>
+        </div>
+      </section>
+
+      {/* Footer */}
+      <footer className="py-12 px-4 bg-gray-950 border-t border-gray-800">
+        <div className="max-w-7xl mx-auto">
+          <div className="grid md:grid-cols-4 gap-8 mb-8">
+            <div>
+              <h3 className="text-xl font-black text-white mb-4">
+                VNR<span className="text-purple-500">IA</span>
+              </h3>
+              <p className="text-gray-500 text-sm">
+                Tu fuente diaria de noticias, tutoriales y herramientas de Inteligencia Artificial.
+              </p>
+            </div>
+            <div>
+              <h4 className="font-bold text-white mb-4">Contenido</h4>
+              <div className="space-y-2">
+                <Link href="/blog" className="block text-gray-400 hover:text-white transition text-sm">
+                  Artículos
+                </Link>
+                <Link href="/blog/mejores-herramientas-ia-gratis-2026" className="block text-gray-400 hover:text-white transition text-sm">
+                  Herramientas IA
+                </Link>
+                <Link href="/blog/chatgpt-vs-claude-comparativa-2026" className="block text-gray-400 hover:text-white transition text-sm">
+                  Comparativas
+                </Link>
+              </div>
+            </div>
+            <div>
+              <h4 className="font-bold text-white mb-4">Proyectos</h4>
+              <div className="space-y-2">
+                <a href="https://kick.com/hablosinsaber" target="_blank" rel="noopener noreferrer" className="block text-gray-400 hover:text-white transition text-sm">
+                  🎮 Kick - hablosinsaber
+                </a>
+                <a href="https://hispanosensuiza.ch" target="_blank" rel="noopener noreferrer" className="block text-gray-400 hover:text-white transition text-sm">
+                  🇪🇸🇨🇭 Hispanos en Suiza
+                </a>
+                <a href="https://instagram.com/hispanosensuiza" target="_blank" rel="noopener noreferrer" className="block text-gray-400 hover:text-white transition text-sm">
+                  📸 Instagram
+                </a>
+              </div>
+            </div>
+            <div>
+              <h4 className="font-bold text-white mb-4">Newsletter</h4>
+              <p className="text-gray-500 text-sm mb-4">
+                Recibe las noticias de IA más importantes cada semana.
+              </p>
+              <div className="flex gap-2">
+                <input
+                  type="email"
+                  placeholder="tu@email.com"
+                  className="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-white text-sm flex-1 focus:outline-none focus:border-purple-500"
+                />
+                <button className="bg-purple-600 hover:bg-purple-500 text-white px-4 py-2 rounded-lg font-bold text-sm transition">
+                  OK
+                </button>
+              </div>
+            </div>
+          </div>
+          <div className="border-t border-gray-800 pt-8 text-center text-gray-500 text-sm">
+            © 2026 VNR IA Solutions. Hecho con ❤️ para la comunidad hispanohablante.
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }
