@@ -4,46 +4,52 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
+const tools = [
+  { name: 'ChatGPT', category: 'Chat IA', rating: 4.8, link: '/blog/chatgpt-vs-claude-comparativa-2026' },
+  { name: 'Claude', category: 'Chat IA', rating: 4.9, link: '/blog/tutorial-claude-espanol-guia-completa-2026' },
+  { name: 'Midjourney', category: 'Imágenes', rating: 4.7, link: '/blog/mejores-herramientas-ia-gratis-2026' },
+  { name: 'Notion AI', category: 'Productividad', rating: 4.6, link: '/blog/mejores-herramientas-ia-gratis-2026' },
+];
+
+const articles = [
+  {
+    slug: 'chatgpt-vs-claude-comparativa-2026',
+    title: 'ChatGPT vs Claude 2026',
+    excerpt: 'Comparativa completa de los dos mejores asistentes IA',
+    category: 'Comparativas',
+  },
+  {
+    slug: 'mejores-herramientas-ia-gratis-2026',
+    title: 'Top 50 Herramientas IA Gratis',
+    excerpt: 'Las mejores herramientas de IA sin pagar nada',
+    category: 'Recursos',
+  },
+  {
+    slug: 'claude-programacion-tutorial-2026',
+    title: 'Claude para Programación',
+    excerpt: 'Guía completa para programar con Claude',
+    category: 'Tutoriales',
+  },
+];
+
 export default function Home() {
   const router = useRouter();
-  const [step, setStep] = useState<'problem' | 'questions' | 'processing'>('problem');
   const [problem, setProblem] = useState('');
-  const [email, setEmail] = useState('');
-  const [name, setName] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [step, setStep] = useState<'hero' | 'form' | 'questions' | 'processing'>('hero');
   const [questions, setQuestions] = useState<any[]>([]);
   const [answers, setAnswers] = useState<Record<string, string>>({});
-  const [isLoading, setIsLoading] = useState(false);
-  const [loadingMessage, setLoadingMessage] = useState('');
+  const [email, setEmail] = useState('');
+  const [name, setName] = useState('');
 
-  const placeholders = [
-    "Ejemplo: Necesito automatizar las respuestas de mi servicio al cliente...",
-    "Ejemplo: Quiero crear una estrategia de contenido para Instagram...",
-    "Ejemplo: No sé qué herramienta de IA usar para mi negocio...",
-    "Ejemplo: Cómo puedo mejorar la conversión de mi landing page...",
-  ];
-
-  const [currentPlaceholder, setCurrentPlaceholder] = useState(0);
-
-  // Rotate placeholder every 3 seconds
-  useState(() => {
-    const interval = setInterval(() => {
-      setCurrentPlaceholder((prev) => (prev + 1) % placeholders.length);
-    }, 3000);
-    return () => clearInterval(interval);
-  });
-
-  const handleSubmitProblem = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleAnalyze = async () => {
     if (problem.length < 50) {
-      alert('Por favor describe tu problema con más detalle (mínimo 50 caracteres)');
+      alert('Describe tu problema con más detalle (mínimo 50 caracteres)');
       return;
     }
 
     setIsLoading(true);
-    setLoadingMessage('Analizando tu problema...');
-
     try {
-      // Call API to classify problem and generate questions
       const response = await fetch('/api/classify', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -51,12 +57,9 @@ export default function Home() {
       });
 
       const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Error al analizar el problema');
-      }
-
-      setQuestions(data.questions);
+      setQuestions(data.questions || []);
       setStep('questions');
     } catch (error: any) {
       alert('Error: ' + error.message);
@@ -65,60 +68,27 @@ export default function Home() {
     }
   };
 
-  const handleSubmitAnswers = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    // Validate all questions answered
-    if (questions.some(q => !answers[q.id])) {
-      alert('Por favor responde todas las preguntas');
-      return;
-    }
-
+  const handleSubmitAnswers = async () => {
     if (!email || !name) {
       alert('Por favor ingresa tu nombre y email');
       return;
     }
 
-    setIsLoading(true);
     setStep('processing');
-
-    const loadingMessages = [
-      'Analizando tu problema...',
-      'Creando agente especializado...',
-      'Investigando mejores soluciones...',
-      'Generando tu plan personalizado...',
-    ];
-
-    let messageIndex = 0;
-    const messageInterval = setInterval(() => {
-      setLoadingMessage(loadingMessages[messageIndex]);
-      messageIndex = (messageIndex + 1) % loadingMessages.length;
-    }, 3000);
+    setIsLoading(true);
 
     try {
       const response = await fetch('/api/generate-solution', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          problem,
-          answers,
-          email,
-          name,
-        }),
+        body: JSON.stringify({ problem, answers, email, name }),
       });
 
       const data = await response.json();
+      if (!response.ok) throw new Error(data.error);
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Error al generar la solución');
-      }
-
-      clearInterval(messageInterval);
-
-      // Redirect to solution page
       router.push(`/solucion/${data.consultationId}`);
     } catch (error: any) {
-      clearInterval(messageInterval);
       alert('Error: ' + error.message);
       setStep('questions');
     } finally {
@@ -127,227 +97,315 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen py-12 px-4">
-      <div className="max-w-4xl mx-auto">
-        {/* Header */}
-        <header className="text-center mb-12">
-          <nav className="flex justify-center gap-6 mb-6">
-            <Link href="/blog" className="text-white/80 hover:text-white font-medium">
-              Blog IA
-            </Link>
-          </nav>
-          <h1 className="text-5xl font-bold text-white mb-4">
+    <div className="min-h-screen">
+      {/* Navigation */}
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100">
+        <div className="max-w-6xl mx-auto px-4 py-4 flex justify-between items-center">
+          <Link href="/" className="text-2xl font-bold bg-gradient-to-r from-purple-600 to-blue-500 bg-clip-text text-transparent">
             VNR IA Solutions
-          </h1>
-          <p className="text-xl text-white/90">
-            Resuelve cualquier problema con IA en minutos
-          </p>
-        </header>
+          </Link>
+          <div className="flex gap-6 items-center">
+            <Link href="/blog" className="text-gray-600 hover:text-purple-600 font-medium transition">
+              Blog
+            </Link>
+            <Link href="#herramientas" className="text-gray-600 hover:text-purple-600 font-medium transition">
+              Herramientas
+            </Link>
+            <button
+              onClick={() => setStep('form')}
+              className="bg-gradient-to-r from-purple-600 to-blue-500 text-white px-5 py-2 rounded-full font-medium hover:shadow-lg transition"
+            >
+              Resolver Problema
+            </button>
+          </div>
+        </div>
+      </nav>
 
-        {/* Step 1: Problem Description */}
-        {step === 'problem' && (
-          <div className="card max-w-2xl mx-auto">
-            <h2 className="text-3xl font-bold text-brand-purple mb-4">
-              Describe tu problema
-            </h2>
-            <p className="text-gray-600 mb-6">
-              Sé específico. Cuanto más detalle proporciones, mejor será la solución que generemos para ti.
-            </p>
+      {/* Hero Section */}
+      {step === 'hero' && (
+        <>
+          <section className="pt-32 pb-20 px-4 bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+            <div className="max-w-4xl mx-auto text-center">
+              <div className="inline-block mb-6 px-4 py-2 bg-purple-500/20 rounded-full">
+                <span className="text-purple-300 text-sm font-medium">Potenciado por IA de última generación</span>
+              </div>
 
-            <form onSubmit={handleSubmitProblem}>
+              <h1 className="text-5xl md:text-6xl font-bold text-white mb-6 leading-tight">
+                Domina la <span className="bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">Inteligencia Artificial</span>
+              </h1>
+
+              <p className="text-xl text-gray-300 mb-10 max-w-2xl mx-auto">
+                Tutoriales, comparativas y herramientas para aprovechar el poder de la IA en tu trabajo y proyectos.
+              </p>
+
+              <div className="flex flex-col sm:flex-row gap-4 justify-center">
+                <button
+                  onClick={() => setStep('form')}
+                  className="bg-white text-purple-700 px-8 py-4 rounded-full font-semibold text-lg hover:shadow-xl transition transform hover:-translate-y-1"
+                >
+                  Resolver Mi Problema con IA
+                </button>
+                <Link
+                  href="/blog"
+                  className="border-2 border-white/30 text-white px-8 py-4 rounded-full font-semibold text-lg hover:bg-white/10 transition"
+                >
+                  Ver Artículos
+                </Link>
+              </div>
+
+              <div className="mt-16 grid grid-cols-3 gap-8 max-w-lg mx-auto">
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-white">50+</div>
+                  <div className="text-gray-400 text-sm">Herramientas IA</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-white">1.2K+</div>
+                  <div className="text-gray-400 text-sm">Problemas Resueltos</div>
+                </div>
+                <div className="text-center">
+                  <div className="text-3xl font-bold text-white">4.9</div>
+                  <div className="text-gray-400 text-sm">Valoración</div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          {/* Featured Articles */}
+          <section className="py-20 px-4 bg-gray-50">
+            <div className="max-w-6xl mx-auto">
+              <div className="text-center mb-12">
+                <h2 className="text-3xl font-bold text-gray-800 mb-4">Artículos Destacados</h2>
+                <p className="text-gray-600">Guías y tutoriales para dominar las herramientas de IA</p>
+              </div>
+
+              <div className="grid md:grid-cols-3 gap-6">
+                {articles.map((article) => (
+                  <Link
+                    key={article.slug}
+                    href={`/blog/${article.slug}`}
+                    className="bg-white rounded-2xl p-6 shadow-sm hover:shadow-xl transition group"
+                  >
+                    <span className="text-sm font-medium text-purple-600 bg-purple-50 px-3 py-1 rounded-full">
+                      {article.category}
+                    </span>
+                    <h3 className="text-xl font-bold text-gray-800 mt-4 mb-2 group-hover:text-purple-600 transition">
+                      {article.title}
+                    </h3>
+                    <p className="text-gray-600 mb-4">{article.excerpt}</p>
+                    <span className="text-purple-600 font-medium group-hover:translate-x-2 inline-block transition-transform">
+                      Leer más →
+                    </span>
+                  </Link>
+                ))}
+              </div>
+
+              <div className="text-center mt-10">
+                <Link
+                  href="/blog"
+                  className="text-purple-600 font-semibold hover:text-purple-700 text-lg"
+                >
+                  Ver todos los artículos →
+                </Link>
+              </div>
+            </div>
+          </section>
+
+          {/* Tools Section */}
+          <section id="herramientas" className="py-20 px-4">
+            <div className="max-w-6xl mx-auto">
+              <div className="text-center mb-12">
+                <h2 className="text-3xl font-bold text-gray-800 mb-4">Herramientas IA Recomendadas</h2>
+                <p className="text-gray-600">Las mejores herramientas de IA analizadas y comparadas</p>
+              </div>
+
+              <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+                {tools.map((tool) => (
+                  <Link
+                    key={tool.name}
+                    href={tool.link}
+                    className="bg-white border border-gray-200 rounded-xl p-5 hover:border-purple-300 hover:shadow-md transition group"
+                  >
+                    <div className="flex justify-between items-start mb-3">
+                      <div className="w-12 h-12 bg-gradient-to-br from-purple-100 to-blue-100 rounded-xl flex items-center justify-center">
+                        <span className="text-2xl font-bold text-purple-600">{tool.name[0]}</span>
+                      </div>
+                      <span className="text-sm font-medium text-yellow-600 bg-yellow-50 px-2 py-1 rounded">
+                        {tool.rating}
+                      </span>
+                    </div>
+                    <h3 className="font-bold text-gray-800 group-hover:text-purple-600 transition">{tool.name}</h3>
+                    <p className="text-sm text-gray-500">{tool.category}</p>
+                  </Link>
+                ))}
+              </div>
+
+              <div className="text-center mt-10">
+                <Link
+                  href="/blog/mejores-herramientas-ia-gratis-2026"
+                  className="bg-gradient-to-r from-purple-600 to-blue-500 text-white px-8 py-3 rounded-full font-semibold hover:shadow-lg transition"
+                >
+                  Ver Top 50 Herramientas IA Gratis
+                </Link>
+              </div>
+            </div>
+          </section>
+
+          {/* CTA Section */}
+          <section className="py-20 px-4 bg-gradient-to-r from-purple-600 to-blue-500">
+            <div className="max-w-3xl mx-auto text-center">
+              <h2 className="text-3xl md:text-4xl font-bold text-white mb-6">
+                ¿Tienes un problema que la IA puede resolver?
+              </h2>
+              <p className="text-xl text-white/90 mb-8">
+                Describe tu problema y recibe una solución personalizada en minutos. Gratis.
+              </p>
+              <button
+                onClick={() => setStep('form')}
+                className="bg-white text-purple-700 px-10 py-4 rounded-full font-semibold text-lg hover:shadow-xl transition transform hover:-translate-y-1"
+              >
+                Obtener Mi Solución
+              </button>
+            </div>
+          </section>
+
+          {/* Footer */}
+          <footer className="py-12 px-4 bg-gray-900">
+            <div className="max-w-6xl mx-auto">
+              <div className="flex flex-col md:flex-row justify-between items-center">
+                <div className="text-2xl font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent mb-4 md:mb-0">
+                  VNR IA Solutions
+                </div>
+                <div className="flex gap-6">
+                  <Link href="/blog" className="text-gray-400 hover:text-white transition">Blog</Link>
+                  <Link href="#herramientas" className="text-gray-400 hover:text-white transition">Herramientas</Link>
+                </div>
+              </div>
+              <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-500 text-sm">
+                © 2026 VNR IA Solutions. Todos los derechos reservados.
+              </div>
+            </div>
+          </footer>
+        </>
+      )}
+
+      {/* Problem Form */}
+      {step === 'form' && (
+        <section className="pt-32 pb-20 px-4 min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+          <div className="max-w-2xl mx-auto">
+            <button
+              onClick={() => setStep('hero')}
+              className="text-white/70 hover:text-white mb-8 flex items-center gap-2"
+            >
+              ← Volver
+            </button>
+
+            <div className="bg-white rounded-3xl p-8 shadow-2xl">
+              <h2 className="text-3xl font-bold text-gray-800 mb-2">Describe tu problema</h2>
+              <p className="text-gray-600 mb-6">Cuanto más detalle, mejor será la solución.</p>
+
               <textarea
-                className="textarea h-48 mb-4"
-                placeholder={placeholders[currentPlaceholder]}
                 value={problem}
                 onChange={(e) => setProblem(e.target.value)}
+                placeholder="Ejemplo: Necesito automatizar las respuestas de atención al cliente de mi tienda online. Recibo unas 50 consultas diarias y quiero que la IA responda las preguntas frecuentes..."
+                className="w-full h-48 p-4 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none resize-none text-gray-800"
                 disabled={isLoading}
               />
 
-              <div className="text-sm text-gray-500 mb-6">
-                {problem.length}/500 caracteres (mínimo 50)
-              </div>
-
-              <div className="bg-gray-50 p-4 rounded-lg mb-6">
-                <h3 className="font-semibold text-sm mb-2">💡 Tips para una mejor solución:</h3>
-                <ul className="text-sm text-gray-600 space-y-1">
-                  <li>✓ Sé específico (evita "necesito ayuda con mi negocio")</li>
-                  <li>✓ Menciona tu contexto (industria, tamaño, presupuesto si relevante)</li>
-                  <li>✓ Describe el resultado que buscas</li>
-                </ul>
+              <div className="flex justify-between items-center mt-4 mb-6">
+                <span className="text-sm text-gray-500">{problem.length}/500 caracteres (mín. 50)</span>
               </div>
 
               <button
-                type="submit"
-                className="btn-primary w-full"
+                onClick={handleAnalyze}
                 disabled={isLoading || problem.length < 50}
+                className="w-full bg-gradient-to-r from-purple-600 to-blue-500 text-white py-4 rounded-xl font-semibold text-lg hover:shadow-lg transition disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {isLoading ? 'Analizando...' : 'Obtener Solución Gratis →'}
+                {isLoading ? 'Analizando...' : 'Analizar Mi Problema'}
               </button>
 
-              <div className="mt-4 text-center text-sm text-gray-500">
-                <p>✓ Solución básica gratis</p>
-                <p>✓ Sin tarjeta de crédito</p>
-                <p>✓ Respuesta en 2-5 minutos</p>
-              </div>
-            </form>
+              <p className="text-center text-sm text-gray-500 mt-4">
+                Gratis • Sin tarjeta • Respuesta en 2 minutos
+              </p>
+            </div>
           </div>
-        )}
+        </section>
+      )}
 
-        {/* Step 2: Questions */}
-        {step === 'questions' && (
-          <div className="card max-w-2xl mx-auto">
-            <h2 className="text-3xl font-bold text-brand-purple mb-4">
-              Ayúdanos a personalizar tu solución
-            </h2>
-            <p className="text-gray-600 mb-6">
-              Hemos analizado tu problema. Unas preguntas rápidas para crear el mejor agente especializado para ti.
-            </p>
+      {/* Questions Step */}
+      {step === 'questions' && (
+        <section className="pt-32 pb-20 px-4 min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900">
+          <div className="max-w-2xl mx-auto">
+            <button
+              onClick={() => setStep('form')}
+              className="text-white/70 hover:text-white mb-8 flex items-center gap-2"
+            >
+              ← Volver
+            </button>
 
-            <form onSubmit={handleSubmitAnswers} className="space-y-6">
-              {/* User info */}
-              <div>
-                <label className="block text-sm font-medium mb-2">Tu nombre</label>
-                <input
-                  type="text"
-                  className="input"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  required
-                />
-              </div>
+            <div className="bg-white rounded-3xl p-8 shadow-2xl">
+              <h2 className="text-2xl font-bold text-gray-800 mb-2">Personaliza tu solución</h2>
+              <p className="text-gray-600 mb-6">Unas preguntas rápidas para darte la mejor respuesta.</p>
 
-              <div>
-                <label className="block text-sm font-medium mb-2">Tu email (para enviarte la solución)</label>
-                <input
-                  type="email"
-                  className="input"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  required
-                />
-              </div>
+              <div className="space-y-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Tu nombre</label>
+                  <input
+                    type="text"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none"
+                    placeholder="Tu nombre"
+                  />
+                </div>
 
-              {/* Dynamic questions */}
-              {questions.map((q, index) => (
-                <div key={q.id}>
-                  <label className="block text-sm font-medium mb-2">
-                    {index + 1}. {q.question}
-                  </label>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Tu email</label>
+                  <input
+                    type="email"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none"
+                    placeholder="tu@email.com"
+                  />
+                </div>
 
-                  {q.type === 'text' && (
+                {questions.map((q, i) => (
+                  <div key={q.id || i}>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {i + 1}. {q.question}
+                    </label>
                     <input
                       type="text"
-                      className="input"
                       value={answers[q.id] || ''}
-                      onChange={(e) =>
-                        setAnswers({ ...answers, [q.id]: e.target.value })
-                      }
-                      required
+                      onChange={(e) => setAnswers({ ...answers, [q.id]: e.target.value })}
+                      className="w-full p-3 border-2 border-gray-200 rounded-xl focus:border-purple-500 focus:outline-none"
                     />
-                  )}
-
-                  {q.type === 'textarea' && (
-                    <textarea
-                      className="textarea h-24"
-                      value={answers[q.id] || ''}
-                      onChange={(e) =>
-                        setAnswers({ ...answers, [q.id]: e.target.value })
-                      }
-                      required
-                    />
-                  )}
-
-                  {q.type === 'select' && (
-                    <select
-                      className="input"
-                      value={answers[q.id] || ''}
-                      onChange={(e) =>
-                        setAnswers({ ...answers, [q.id]: e.target.value })
-                      }
-                      required
-                    >
-                      <option value="">Selecciona una opción</option>
-                      {q.options.map((opt: string) => (
-                        <option key={opt} value={opt}>
-                          {opt}
-                        </option>
-                      ))}
-                    </select>
-                  )}
-                </div>
-              ))}
+                  </div>
+                ))}
+              </div>
 
               <button
-                type="submit"
-                className="btn-primary w-full"
-                disabled={isLoading}
+                onClick={handleSubmitAnswers}
+                disabled={isLoading || !email || !name}
+                className="w-full mt-8 bg-gradient-to-r from-purple-600 to-blue-500 text-white py-4 rounded-xl font-semibold text-lg hover:shadow-lg transition disabled:opacity-50"
               >
-                {isLoading ? 'Generando...' : 'Generar Mi Solución →'}
+                {isLoading ? 'Generando...' : 'Generar Mi Solución'}
               </button>
-
-              <div className="text-center text-sm text-gray-500">
-                🔒 Tu información es privada y segura
-              </div>
-            </form>
-          </div>
-        )}
-
-        {/* Step 3: Processing */}
-        {step === 'processing' && (
-          <div className="card max-w-2xl mx-auto text-center">
-            <div className="mb-8">
-              <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-brand-purple mx-auto mb-4"></div>
-              <h2 className="text-2xl font-bold text-brand-purple mb-2">
-                {loadingMessage}
-              </h2>
-              <p className="text-gray-600">
-                Esto toma entre 30 segundos y 2 minutos
-              </p>
-            </div>
-
-            <div className="bg-gray-50 p-6 rounded-lg">
-              <p className="text-sm text-gray-600 mb-2">
-                💡 Mientras esperas, sabías que...
-              </p>
-              <p className="text-sm text-gray-700">
-                Nuestros agentes IA analizan miles de soluciones en tiempo real para encontrar la mejor respuesta para tu caso específico.
-              </p>
             </div>
           </div>
-        )}
+        </section>
+      )}
 
-        {/* Social Proof */}
-        {step === 'problem' && (
-          <div className="mt-16 text-center">
-            <p className="text-white/80 mb-6">
-              Ya ayudamos a resolver +1,234 problemas
-            </p>
-
-            <div className="grid md:grid-cols-3 gap-6 max-w-3xl mx-auto">
-              <div className="bg-white/10 backdrop-blur-sm p-6 rounded-lg">
-                <p className="text-white/90 mb-2">
-                  "Me ahorró 2 semanas de investigación"
-                </p>
-                <p className="text-white/60 text-sm">- María S.</p>
-              </div>
-
-              <div className="bg-white/10 backdrop-blur-sm p-6 rounded-lg">
-                <p className="text-white/90 mb-2">
-                  "La solución valió 10x lo que pagué"
-                </p>
-                <p className="text-white/60 text-sm">- Carlos R.</p>
-              </div>
-
-              <div className="bg-white/10 backdrop-blur-sm p-6 rounded-lg">
-                <p className="text-white/90 mb-2">
-                  "Increíblemente específico y accionable"
-                </p>
-                <p className="text-white/60 text-sm">- Ana G.</p>
-              </div>
-            </div>
+      {/* Processing Step */}
+      {step === 'processing' && (
+        <section className="pt-32 pb-20 px-4 min-h-screen bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 flex items-center justify-center">
+          <div className="max-w-md mx-auto text-center">
+            <div className="w-20 h-20 border-4 border-purple-500 border-t-transparent rounded-full animate-spin mx-auto mb-8"></div>
+            <h2 className="text-2xl font-bold text-white mb-4">Generando tu solución...</h2>
+            <p className="text-gray-300">Esto puede tomar hasta 2 minutos. Estamos analizando tu problema y creando una solución personalizada.</p>
           </div>
-        )}
-      </div>
+        </section>
+      )}
     </div>
   );
 }

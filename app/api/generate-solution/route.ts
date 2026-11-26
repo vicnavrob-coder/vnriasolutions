@@ -1,14 +1,10 @@
 import { NextResponse } from 'next/server';
-import Anthropic from '@anthropic-ai/sdk';
 import { writeFile, readFile, mkdir } from 'fs/promises';
 import { existsSync } from 'fs';
 import path from 'path';
 
-const anthropic = new Anthropic({
-  apiKey: process.env.ANTHROPIC_API_KEY,
-});
+const GROQ_API_KEY = process.env.GROQ_API_KEY;
 
-// Simple file-based storage for prototype (replace with Supabase later)
 const DATA_DIR = path.join(process.cwd(), 'data');
 const CONSULTATIONS_FILE = path.join(DATA_DIR, 'consultations.json');
 
@@ -39,111 +35,89 @@ export async function POST(request: Request) {
       );
     }
 
-    // Generate unique consultation ID
+    if (!GROQ_API_KEY) {
+      return NextResponse.json(
+        { error: 'API no configurada' },
+        { status: 500 }
+      );
+    }
+
     const consultationId = `consult_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-    // Build context from answers
     const answerContext = Object.entries(answers)
       .map(([key, value]) => `- ${key}: ${value}`)
       .join('\n');
 
-    // Generate solution with Claude
-    const solutionPrompt = `Eres un consultor experto que genera soluciones específicas y accionables para problemas descritos por usuarios.
+    const solutionPrompt = `Eres un consultor experto en IA y tecnología. Genera una solución completa y personalizada.
 
-PROBLEMA DEL USUARIO:
+PROBLEMA:
 "${problem}"
 
-CONTEXTO ADICIONAL:
+CONTEXTO:
 ${answerContext}
 
-Tu tarea es generar una solución completa y personalizada. La respuesta debe tener DOS secciones:
+Genera una solución en DOS partes separadas por "---SEPARADOR---":
 
-## RESUMEN EJECUTIVO (GRATIS)
-[Máximo 300 palabras]
-
-Un resumen ejecutivo que incluya:
-- Identificación del problema principal
-- Causa raíz más probable
-- Recomendación clave #1
-- Un párrafo de overview de la solución
-
-Importante: Este resumen debe ser valioso por sí solo, pero dejar claro que hay mucho más detalle en la solución completa.
+PARTE 1 - RESUMEN (máximo 250 palabras):
+- Identificación del problema
+- Causa raíz probable
+- Recomendación clave
+- Preview de la solución
 
 ---SEPARADOR---
 
-## SOLUCIÓN COMPLETA (PREMIUM)
+PARTE 2 - SOLUCIÓN COMPLETA:
 
-### 1. Análisis Detallado del Problema
-[Análisis profundo de la situación, causas raíz, contexto]
+### Análisis del Problema
+[Análisis detallado]
 
-### 2. Solución Paso a Paso
-[Pasos numerados concretos con timeline estimado]
-
+### Solución Paso a Paso
 Paso 1: [Título]
-- Descripción específica
-- Timeline: X días/semanas
-- Recursos necesarios
+- Qué hacer exactamente
+- Timeline: X días
 - Resultado esperado
 
-[Continuar con más pasos...]
+[Más pasos...]
 
-### 3. Herramientas y Recursos Específicos
-[Lista de herramientas reales con links y precios]
+### Herramientas Recomendadas
+- **[Herramienta]**: Descripción - €XX/mes
 
-- **[Nombre herramienta]** - Descripción breve
-  - Precio: €XX/mes
-  - Por qué recomendada
-  - Link: [URL real]
+### Plan de Implementación
+Semana 1: [Tareas]
+Semana 2: [Tareas]
 
-### 4. Plan de Implementación
-[Timeline semana a semana concreto]
+### Próximos Pasos (HOY)
+1. [Acción concreta]
+2. [Acción concreta]
+3. [Acción concreta]
 
-Semana 1:
-- [Tareas específicas]
+Sé ESPECÍFICO con herramientas reales, precios y tiempos concretos.`;
 
-Semana 2:
-- [Tareas específicas]
-
-### 5. Posibles Obstáculos y Soluciones
-[Anticipar 3-5 problemas comunes y cómo resolverlos]
-
-### 6. Métricas de Éxito
-[Cómo medir si la solución funciona]
-
-### 7. Próximos Pasos Inmediatos
-[3-5 acciones concretas para empezar HOY]
-
-IMPORTANTE:
-- Sé ULTRA específico - menciona herramientas reales, precios reales, timelines realistas
-- No seas genérico - adapta TODO al contexto del usuario
-- Incluye links reales a herramientas (no inventes URLs)
-- Números concretos (presupuestos, tiempos, métricas)
-- Ejemplos prácticos cuando sea relevante
-- Si no estás seguro de algo, dilo claramente
-
-FORMATO:
-Separa las dos secciones con exactamente: "---SEPARADOR---"`;
-
-    const message = await anthropic.messages.create({
-      model: 'claude-opus-4-5-20251101',
-      max_tokens: 4000,
-      temperature: 0.7,
-      messages: [{
-        role: 'user',
-        content: solutionPrompt,
-      }],
+    const response = await fetch('https://api.groq.com/openai/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${GROQ_API_KEY}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'llama-3.1-70b-versatile',
+        messages: [{ role: 'user', content: solutionPrompt }],
+        temperature: 0.7,
+        max_tokens: 3000,
+      }),
     });
 
-    const fullResponse = message.content[0].type === 'text'
-      ? message.content[0].text
-      : '';
+    if (!response.ok) {
+      throw new Error('Error en API de IA');
+    }
 
-    // Split response into free and premium parts
+    const data = await response.json();
+    const fullResponse = data.choices[0]?.message?.content || '';
+
     const parts = fullResponse.split('---SEPARADOR---');
-    const solutionFree = parts[0]?.replace(/^## RESUMEN EJECUTIVO \(GRATIS\)\s*/i, '').trim() || fullResponse.slice(0, 500);
-    const solutionPremium = parts[1]?.replace(/^## SOLUCIÓN COMPLETA \(PREMIUM\)\s*/i, '').trim() || fullResponse;
+    const solutionFree = parts[0]?.trim() || fullResponse.slice(0, 500);
+    const solutionPremium = parts[1]?.trim() || fullResponse;
 
-    // Save consultation to file
     const consultation = {
       id: consultationId,
       userEmail: email,
@@ -153,15 +127,10 @@ Separa las dos secciones con exactamente: "---SEPARADOR---"`;
       solutionFree,
       solutionPremium,
       status: 'completed',
-      paymentStatus: null,
       createdAt: new Date().toISOString(),
     };
 
     await saveConsultation(consultation);
-
-    // In production, send email here with Resend
-    console.log(`[EMAIL] Sending solution to ${email}`);
-    console.log(`Consultation ID: ${consultationId}`);
 
     return NextResponse.json({
       consultationId,
