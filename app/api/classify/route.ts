@@ -55,7 +55,7 @@ Responde SOLO en formato JSON válido (sin markdown):
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        model: 'llama-3.1-70b-versatile',
+        model: 'qwen/qwen3.8-27b',
         messages: [{ role: 'user', content: classificationPrompt }],
         temperature: 0.3,
         max_tokens: 1000,
